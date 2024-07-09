@@ -25,23 +25,12 @@ let nextDayText = document.getElementsByClassName('next-day-text');
 // user location
 let currLoc;
 
-// getLocation();
-// if(getLocation){
-//   runApp(currLoc)
-
-// }
-
+runApp();
 
 //*********************  Events   ************************
-document.addEventListener('DOMContentLoaded', (event) => {
-    runApp(currLoc);
-
-  });
-
 findLocation.addEventListener('input' , function(){
     runApp(findLocation.value);
 })
-
 
 // ******************** Functions ************************
 //get data from API
@@ -80,32 +69,24 @@ function displayNextDays(data){
 }
 
 //run App function
-async function runApp(city="cairo"){
-    let weatherData = await getWeather(city);  
-    if(!weatherData.error){
-        diplayToday(weatherData);
-        displayNextDays(weatherData);
-    }  
-    
+async function runApp(city = null) {
+  try {
+      let location;
+      if (city) {
+          location = city;
+      } else {
+          location = await getLocation(); 
+      }
+      let weatherData = await getWeather(location); 
+      if (!weatherData.error) {
+          diplayToday(weatherData);
+          displayNextDays(weatherData);
+      }
+  } catch (error) {
+      console.error('Error running the application:', error);
+  }
 }
 
-//========= get curr location ========
-function getLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(showPosition, showError);
-   } else { 
-     console.log('Geolocation is not supported by this browser.');
-   }
- 
-}
-    
-  
-  function showPosition(position) {
-    let currLat = position.coords.latitude; 
-    let currLon = position.coords.longitude;
-    currLoc = currLat + ',' + currLon ;
-  }
-  
 function showError(error) {
     switch(error.code) {
       case error.PERMISSION_DENIED:
@@ -123,4 +104,22 @@ function showError(error) {
     }
   }
   
+// get curr location
+function getLocation() {
+  return new Promise(function(resolve, reject) {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+              let currLat = position.coords.latitude;
+              let currLon = position.coords.longitude;
+              currLoc = currLat + ',' + currLon;
+              resolve(currLoc); 
+          }, function(error) {
+              reject(error); 
+          });
+      } else {
+          reject(new Error('Geolocation is not supported by this browser.'));
+      }
+  });
+}
+
   
